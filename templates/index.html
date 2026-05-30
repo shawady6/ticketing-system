@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Ticket System{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="welcome-text">
+        <h2>Welcome back, {{ current_user.full_name }}! 👋</h2>
+        <p>Here's what's happening with your tickets today.</p>
+    </div>
+    <div class="welcome-role">
+        <span class="role-badge role-{{ current_user.role }}">{{ current_user.role|title }}</span>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="stats-grid">
+    <div class="stat-card stat-total">
+        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.total }}</div>
+            <div class="stat-label">Total Tickets</div>
+        </div>
+    </div>
+    <div class="stat-card stat-open">
+        <div class="stat-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.open }}</div>
+            <div class="stat-label">Open</div>
+        </div>
+    </div>
+    <div class="stat-card stat-progress">
+        <div class="stat-icon"><i class="fas fa-spinner"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.in_progress }}</div>
+            <div class="stat-label">In Progress</div>
+        </div>
+    </div>
+    <div class="stat-card stat-resolved">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.resolved }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+    </div>
+    <div class="stat-card stat-closed">
+        <div class="stat-icon"><i class="fas fa-archive"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.closed }}</div>
+            <div class="stat-label">Closed</div>
+        </div>
+    </div>
+    <div class="stat-card stat-critical">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ stats.critical + stats.high }}</div>
+            <div class="stat-label">High Priority</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tickets -->
+<div class="section-header">
+    <h2><i class="fas fa-clock"></i> Recent Tickets</h2>
+    <a href="{{ url_for('tickets') }}" class="btn btn-outline btn-sm">View All</a>
+</div>
+
+<div class="ticket-table-wrapper">
+    <table class="ticket-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Requester</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Category</th>
+                <th>Assigned To</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in recent_tickets %}
+            <tr>
+                <td><span class="ticket-id">#{{ ticket.id }}</span></td>
+                <td>
+                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="ticket-title-link">
+                        {{ ticket.title[:50] }}{% if ticket.title|length > 50 %}...{% endif %}
+                    </a>
+                </td>
+                <td>
+                    <div class="requester">
+                        <div class="requester-avatar">{{ ticket.requester_name[0] }}</div>
+                        <span>{{ ticket.requester_name }}</span>
+                    </div>
+                </td>
+                <td><span class="status-badge status-{{ ticket.status.lower().replace(' ', '-') }}">{{ ticket.status }}</span></td>
+                <td><span class="priority-badge priority-{{ ticket.priority.lower() }}">{{ ticket.priority }}</span></td>
+                <td>{{ ticket.category }}</td>
+                <td>{{ ticket.assigned_to }}</td>
+                <td class="date-cell">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>
+                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn-icon" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No tickets yet. <a href="{{ url_for('create_ticket') }}">Create your first ticket</a></p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Quick Actions -->
+<div class="section-header" style="margin-top: 2rem;">
+    <h2><i class="fas fa-bolt"></i> Quick Actions</h2>
+</div>
+<div class="quick-actions">
+    <a href="{{ url_for('create_ticket') }}" class="quick-card">
+        <i class="fas fa-plus"></i>
+        <span>Create Ticket</span>
+    </a>
+    <a href="{{ url_for('tickets') }}?status=Open" class="quick-card">
+        <i class="fas fa-folder-open"></i>
+        <span>Open Tickets</span>
+    </a>
+    <a href="{{ url_for('tickets') }}?priority=Critical" class="quick-card">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>Critical Issues</span>
+    </a>
+    {% if current_user.role == 'admin' %}
+    <a href="{{ url_for('users') }}" class="quick-card">
+        <i class="fas fa-users-cog"></i>
+        <span>Manage Users</span>
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 16px;
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+.welcome-banner h2 {
+    font-size: 1.3rem;
+    margin-bottom: 0.3rem;
+}
+.welcome-banner p {
+    opacity: 0.85;
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}

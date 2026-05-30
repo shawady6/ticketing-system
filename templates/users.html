@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Ticket System{% endblock %}
+{% block page_title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h3><i class="fas fa-users-cog"></i> All Users</h3>
+    <div class="ticket-table-wrapper">
+        <table class="ticket-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th>Last Login</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td>
+                        <div class="requester">
+                            <div class="requester-avatar">{{ u.full_name[0] }}</div>
+                            <span>{{ u.full_name }}</span>
+                        </div>
+                    </td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('change_role', user_id=u.id) }}" class="inline-form">
+                            <select name="role" onchange="this.form.submit()" class="role-select">
+                                <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                <option value="agent" {% if u.role == 'agent' %}selected{% endif %}>Agent</option>
+                                <option value="user" {% if u.role == 'user' %}selected{% endif %}>User</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td>
+                        <span class="status-badge {% if u.is_active %}status-open{% else %}status-closed{% endif %}">
+                            {{ 'Active' if u.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td class="date-cell">{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td class="date-cell">{{ u.last_login.strftime('%Y-%m-%d %H:%M') if u.last_login else 'Never' }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('toggle_user', user_id=u.id) }}" class="inline-form" onsubmit="return confirm('Toggle user status?');">
+                            <button type="submit" class="btn-icon {% if u.is_active %}btn-warning{% else %}btn-success{% endif %}" title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                                <i class="fas fa-{% if u.is_active %}pause{% else %}play{% endif %}"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <p>No users found.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.role-select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.3rem 0.6rem; color: var(--text);
+    font-size: 0.85rem; cursor: pointer;
+}
+.role-select:focus { outline: none; border-color: var(--primary); }
+</style>
+{% endblock %}

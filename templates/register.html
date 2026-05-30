@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Ticket System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2563eb; --primary-dark: #1d4ed8; --accent: #06b6d4;
+            --bg: #0f172a; --surface: #1e293b; --surface-light: #334155;
+            --text: #f1f5f9; --text-muted: #94a3b8; --border: #334155;
+            --danger: #ef4444; --success: #10b981;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+        .bg-animation {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .bg-animation::before {
+            content: ''; position: absolute; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, transparent 50%),
+                        radial-gradient(circle, rgba(6,182,212,0.08) 30%, transparent 60%);
+            animation: float 20s ease-in-out infinite;
+        }
+        @keyframes float { 0%,100% { transform: translate(-10%,-10%) rotate(0deg); } 50% { transform: translate(10%,10%) rotate(180deg); } }
+        .login-container { width: 100%; max-width: 440px; padding: 2rem; }
+        .login-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 2.5rem;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+        }
+        .login-logo { text-align: center; margin-bottom: 2rem; }
+        .login-logo i { font-size: 3rem; color: var(--accent); margin-bottom: 1rem; }
+        .login-logo h1 { font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--text), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .login-logo p { color: var(--text-muted); margin-top: 0.3rem; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-size: 0.85rem; font-weight: 500; color: var(--text-muted); margin-bottom: 0.4rem; }
+        .input-wrapper { position: relative; }
+        .input-wrapper i { position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .input-wrapper input {
+            width: 100%; padding: 0.8rem 1rem 0.8rem 2.5rem; background: var(--bg);
+            border: 1px solid var(--border); border-radius: 10px; color: var(--text);
+            font-size: 0.95rem; transition: all 0.3s;
+        }
+        .input-wrapper input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+        .input-wrapper input::placeholder { color: var(--text-dark); }
+        .btn-login {
+            width: 100%; padding: 0.9rem; background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white; border: none; border-radius: 10px; font-weight: 600; font-size: 1rem;
+            cursor: pointer; transition: all 0.3s; margin-top: 0.5rem;
+        }
+        .btn-login:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(37,99,235,0.3); }
+        .login-footer { text-align: center; margin-top: 1.5rem; color: var(--text-muted); font-size: 0.9rem; }
+        .login-footer a { color: var(--accent); font-weight: 600; }
+        .login-footer a:hover { text-decoration: underline; }
+        .flash-messages { margin-bottom: 1rem; }
+        .flash { padding: 0.8rem 1rem; border-radius: 10px; margin-bottom: 0.5rem; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+        .flash-success { background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); color: var(--success); }
+        .flash-danger { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: var(--danger); }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-logo">
+                <i class="fas fa-user-plus"></i>
+                <h1>Create Account</h1>
+                <p>Join the Ticket System</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash flash-{{ category }}">
+                                <i class="fas fa-{% if category == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('register') }}">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" name="full_name" required placeholder="Your full name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user"></i>
+                        <input type="text" name="username" required placeholder="Choose a username">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" name="email" required placeholder="your@email.com">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="password" required placeholder="Create a password">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" name="confirm_password" required placeholder="Confirm your password">
+                    </div>
+                </div>
+                <button type="submit" class="btn-login">
+                    <i class="fas fa-user-plus"></i> Create Account
+                </button>
+            </form>
+
+            <div class="login-footer">
+                Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
