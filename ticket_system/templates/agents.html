@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Agents - Ticket System{% endblock %}
+{% block page_title %}Manage Agents{% endblock %}
+
+{% block content %}
+<div class="agents-layout">
+    <div class="card">
+        <h3><i class="fas fa-users"></i> Active Agents & Admins</h3>
+        <div class="agents-table-wrapper">
+            <table class="ticket-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for agent in agents %}
+                    <tr>
+                        <td>
+                            <div class="requester">
+                                <div class="requester-avatar">{{ agent.full_name[0] }}</div>
+                                <span>{{ agent.full_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ agent.username }}</td>
+                        <td>{{ agent.email }}</td>
+                        <td><span class="role-badge role-{{ agent.role }}">{{ agent.role|title }}</span></td>
+                        <td>
+                            <span class="status-badge {% if agent.is_active %}status-open{% else %}status-closed{% endif %}">
+                                {{ 'Active' if agent.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="date-cell">{{ agent.last_login.strftime('%Y-%m-%d %H:%M') if agent.last_login else 'Never' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No agents found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+            <i class="fas fa-info-circle"></i> To add or manage agents, go to <a href="{{ url_for('users') }}" style="color: var(--accent);">Users Management</a>.
+        </p>
+    </div>
+</div>
+{% endblock %}

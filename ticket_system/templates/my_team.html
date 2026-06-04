@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}My Team - Ticket System{% endblock %}
+{% block page_title %}My Team: {{ user.team }}{% endblock %}
+
+{% block content %}
+<!-- Team Stats -->
+<div class="stats-grid">
+    <div class="stat-card stat-total">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ team_stats.members }}</div>
+            <div class="stat-label">Team Members</div>
+        </div>
+    </div>
+    <div class="stat-card stat-open">
+        <div class="stat-icon"><i class="fas fa-ticket-alt"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ team_stats.total }}</div>
+            <div class="stat-label">Total Tickets</div>
+        </div>
+    </div>
+    <div class="stat-card stat-progress">
+        <div class="stat-icon"><i class="fas fa-folder-open"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ team_stats.open }}</div>
+            <div class="stat-label">Open</div>
+        </div>
+    </div>
+    <div class="stat-card stat-resolved">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ team_stats.resolved }}</div>
+            <div class="stat-label">Resolved</div>
+        </div>
+    </div>
+    <div class="stat-card stat-closed">
+        <div class="stat-icon"><i class="fas fa-archive"></i></div>
+        <div class="stat-info">
+            <div class="stat-number">{{ team_stats.closed }}</div>
+            <div class="stat-label">Closed</div>
+        </div>
+    </div>
+</div>
+
+<!-- Team Members -->
+<div class="section-header">
+    <h2><i class="fas fa-users"></i> Team Members</h2>
+    <a href="{{ url_for('users') }}" class="btn btn-outline btn-sm">Manage Members</a>
+</div>
+
+<div class="ticket-table-wrapper">
+    <table class="ticket-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Last Login</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in team_members %}
+            <tr>
+                <td>
+                    <div class="requester">
+                        <div class="requester-avatar">{{ member.full_name[0] }}</div>
+                        <span>{{ member.full_name }}</span>
+                    </div>
+                </td>
+                <td>{{ member.username }}</td>
+                <td>{{ member.email }}</td>
+                <td><span class="role-badge role-{{ member.role }}">{{ member.role|title }}</span></td>
+                <td>
+                    <span class="status-badge {% if member.is_active %}status-open{% else %}status-closed{% endif %}">
+                        {{ 'Active' if member.is_active else 'Inactive' }}
+                    </span>
+                </td>
+                <td class="date-cell">{{ member.last_login.strftime('%Y-%m-%d %H:%M') if member.last_login else 'Never' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <p>No team members found.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Team Tickets -->
+<div class="section-header" style="margin-top: 2rem;">
+    <h2><i class="fas fa-ticket-alt"></i> Team Tickets</h2>
+    <a href="{{ url_for('tickets') }}?team={{ user.team }}" class="btn btn-outline btn-sm">View All</a>
+</div>
+
+<div class="ticket-table-wrapper">
+    <table class="ticket-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Requester</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th>Assigned To</th>
+                <th>Created</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in team_tickets[:10] %}
+            <tr>
+                <td><span class="ticket-id">#{{ ticket.id }}</span></td>
+                <td>
+                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="ticket-title-link">
+                        {{ ticket.title[:40] }}{% if ticket.title|length > 40 %}...{% endif %}
+                    </a>
+                </td>
+                <td>{{ ticket.requester_name }}</td>
+                <td><span class="status-badge status-{{ ticket.status.lower().replace(' ', '-') }}">{{ ticket.status }}</span></td>
+                <td><span class="priority-badge priority-{{ ticket.priority.lower() }}">{{ ticket.priority }}</span></td>
+                <td>{{ ticket.assigned_to }}</td>
+                <td class="date-cell">{{ ticket.created_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="{{ url_for('ticket_detail', ticket_id=ticket.id) }}" class="btn-icon" title="View">
+                        <i class="fas fa-eye"></i>
+                    </a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <p>No team tickets yet.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

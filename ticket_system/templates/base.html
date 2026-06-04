@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Ticket System{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <i class="fas fa-ticket-alt"></i>
+                <span>TicketSys</span>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('tickets') }}" class="nav-item {% if request.endpoint == 'tickets' %}active{% endif %}">
+                <i class="fas fa-ticket-alt"></i>
+                <span>All Tickets</span>
+            </a>
+            <a href="{{ url_for('create_ticket') }}" class="nav-item {% if request.endpoint == 'create_ticket' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>New Ticket</span>
+            </a>
+
+            {# My Tickets - for all users #}
+            <a href="{{ url_for('my_tickets') }}" class="nav-item {% if request.endpoint == 'my_tickets' %}active{% endif %}">
+                <i class="fas fa-tasks"></i>
+                <span>My Tickets</span>
+            </a>
+
+            {# My Team - for Team Leaders only #}
+            {% if current_user and current_user.role == 'team_leader' %}
+            <a href="{{ url_for('my_team') }}" class="nav-item {% if request.endpoint == 'my_team' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>My Team</span>
+            </a>
+            {% endif %}
+
+            {# Users Management - for Admin, Agent, Team Leader #}
+            {% if current_user and current_user.role in ['admin', 'agent', 'team_leader'] %}
+            <a href="{{ url_for('users') }}" class="nav-item {% if request.endpoint == 'users' %}active{% endif %}">
+                <i class="fas fa-users-cog"></i>
+                <span>Users</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">{{ current_user.full_name[0] if current_user else '?' }}</div>
+                <div class="user-details">
+                    <div class="user-name">{{ current_user.full_name if current_user else 'Guest' }}</div>
+                    <div class="user-role">{{ current_user.role|title if current_user else '' }}{% if current_user and current_user.team %} | {{ current_user.team }}{% endif %}</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <button class="mobile-toggle" id="mobileToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+            <div class="top-actions">
+                {% if current_user %}
+                <a href="{{ url_for('profile') }}" class="btn btn-outline btn-sm">
+                    <i class="fas fa-user"></i> Profile
+                </a>
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+                {% endif %}
+                <a href="{{ url_for('create_ticket') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> New Ticket
+                </a>
+            </div>
+        </header>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">
+                            <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'danger' %}exclamation-circle{% elif category == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                            {{ message }}
+                            <button class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Overlay for mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

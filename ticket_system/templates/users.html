@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Users - Ticket System{% endblock %}
+{% block page_title %}Manage Users{% endblock %}
+
+{% block content %}
+<div class="agents-layout">
+    <!-- Add User Form -->
+    <div class="card form-card">
+        <h3><i class="fas fa-user-plus"></i> Add New User</h3>
+        <form method="POST" action="{{ url_for('add_user') }}">
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" name="full_name" required placeholder="Full name">
+                </div>
+                <div class="form-group">
+                    <label>Username <span class="required">*</span></label>
+                    <input type="text" name="username" required placeholder="Username">
+                </div>
+            </div>
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label>Email <span class="required">*</span></label>
+                    <input type="email" name="email" required placeholder="email@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Password <span class="required">*</span></label>
+                    <input type="password" name="password" required placeholder="Password">
+                </div>
+            </div>
+            <div class="form-row two-col">
+                <div class="form-group">
+                    <label>Role</label>
+                    <select name="role">
+                        {% if current_user.role == 'admin' %}
+                        <option value="user">User</option>
+                        <option value="agent">Agent</option>
+                        <option value="team_leader">Team Leader</option>
+                        <option value="admin">Admin</option>
+                        {% elif current_user.role == 'agent' %}
+                        <option value="user">User</option>
+                        {% else %}
+                        <option value="user">User</option>
+                        {% endif %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Team</label>
+                    <select name="team">
+                        <option value="">No Team</option>
+                        <option value="IT">IT</option>
+                        <option value="Network">Network</option>
+                        <option value="Support">Support</option>
+                        <option value="Development">Development</option>
+                    </select>
+                    {% if current_user.role == 'team_leader' %}
+                    <small style="color: var(--text-muted);">Team Leader users will be assigned to your team: <strong>{{ current_user.team }}</strong></small>
+                    {% endif %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add User
+            </button>
+        </form>
+    </div>
+
+    <!-- Users List -->
+    <div class="card">
+        <h3><i class="fas fa-users"></i> All Users</h3>
+        <div class="agents-table-wrapper">
+            <table class="ticket-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Team</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td>
+                            <div class="requester">
+                                <div class="requester-avatar">{{ u.full_name[0] }}</div>
+                                <span>{{ u.full_name }}</span>
+                            </div>
+                        </td>
+                        <td>{{ u.username }}</td>
+                        <td>{{ u.email }}</td>
+                        <td>
+                            {% if current_user.role == 'admin' %}
+                            <form method="POST" action="{{ url_for('change_role', user_id=u.id) }}" class="inline-form">
+                                <select name="role" onchange="this.form.submit()" class="role-select">
+                                    <option value="admin" {% if u.role == 'admin' %}selected{% endif %}>Admin</option>
+                                    <option value="agent" {% if u.role == 'agent' %}selected{% endif %}>Agent</option>
+                                    <option value="team_leader" {% if u.role == 'team_leader' %}selected{% endif %}>Team Leader</option>
+                                    <option value="user" {% if u.role == 'user' %}selected{% endif %}>User</option>
+                                </select>
+                            </form>
+                            {% else %}
+                            <span class="role-badge role-{{ u.role }}">{{ u.role|title }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ u.team or '-' }}</td>
+                        <td>
+                            <span class="status-badge {% if u.is_active %}status-open{% else %}status-closed{% endif %}">
+                                {{ 'Active' if u.is_active else 'Inactive' }}
+                            </span>
+                        </td>
+                        <td class="date-cell">{{ u.created_at.strftime('%Y-%m-%d') }}</td>
+                        <td class="actions">
+                            <form method="POST" action="{{ url_for('toggle_user', user_id=u.id) }}" class="inline-form" onsubmit="return confirm('Toggle user status?');">
+                                <button type="submit" class="btn-icon {% if u.is_active %}btn-warning{% else %}btn-success{% endif %}" title="{{ 'Deactivate' if u.is_active else 'Activate' }}">
+                                    <i class="fas fa-{% if u.is_active %}pause{% else %}play{% endif %}"></i>
+                                </button>
+                            </form>
+                            <form method="POST" action="{{ url_for('delete_user', user_id=u.id) }}" class="inline-form" onsubmit="return confirm('Delete user {{ u.username }}? This cannot be undone!');">
+                                <button type="submit" class="btn-icon btn-danger" title="Delete User">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <p>No users found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.role-select {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 6px; padding: 0.3rem 0.6rem; color: var(--text);
+    font-size: 0.85rem; cursor: pointer;
+}
+.role-select:focus { outline: none; border-color: var(--primary); }
+.actions { display: flex; gap: 0.4rem; }
+</style>
+{% endblock %}

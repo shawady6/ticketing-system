@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket #{{ ticket.id }} - {{ ticket.title }}{% endblock %}
+{% block page_title %}Ticket #{{ ticket.id }}{% endblock %}
+
+{% block content %}
+<div class="ticket-detail-layout">
+    <!-- Left: Ticket Info -->
+    <div class="ticket-main">
+        <!-- Ticket Header -->
+        <div class="ticket-header-card">
+            <div class="ticket-header-top">
+                <div>
+                    <h2 class="ticket-detail-title">{{ ticket.title }}</h2>
+                    <div class="ticket-meta">
+                        <span class="status-badge status-{{ ticket.status.lower().replace(' ', '-') }}">{{ ticket.status }}</span>
+                        <span class="priority-badge priority-{{ ticket.priority.lower() }}">{{ ticket.priority }}</span>
+                        <span class="category-badge">{{ ticket.category }}</span>
+                        {% if ticket.team %}
+                        <span class="team-badge"><i class="fas fa-users"></i> {{ ticket.team }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="ticket-dates">
+                    <div><i class="fas fa-calendar"></i> Created: {{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    {% if ticket.resolved_at %}
+                    <div><i class="fas fa-check"></i> Resolved: {{ ticket.resolved_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    {% endif %}
+                    {% if ticket.closed_by %}
+                    <div><i class="fas fa-user-check"></i> Closed by: {{ ticket.closed_by }}</div>
+                    <div><i class="fas fa-clock"></i> Closed at: {{ ticket.closed_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="card">
+            <h3><i class="fas fa-align-left"></i> Description</h3>
+            <p class="ticket-description">{{ ticket.description }}</p>
+        </div>
+
+        <!-- Comments -->
+        <div class="card">
+            <h3><i class="fas fa-comments"></i> Comments ({{ ticket.comments|length }})</h3>
+
+            {% if ticket.comments %}
+            <div class="comments-list">
+                {% for comment in ticket.comments %}
+                {% if not comment.is_internal or current_user.role in ['admin', 'agent', 'team_leader'] %}
+                <div class="comment {% if comment.is_internal %}comment-internal{% endif %}">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <div class="comment-avatar">{{ comment.author[0] }}</div>
+                            <div>
+                                <div class="comment-name">{{ comment.author }}</div>
+                                <div class="comment-time">{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                            </div>
+                        </div>
+                        {% if comment.is_internal %}
+                        <span class="internal-badge"><i class="fas fa-lock"></i> Internal</span>
+                        {% endif %}
+                    </div>
+                    <div class="comment-body">{{ comment.content }}</div>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">No comments yet.</p>
+            {% endif %}
+
+            <!-- Add Comment Form -->
+            <form method="POST" action="{{ url_for('add_comment', ticket_id=ticket.id) }}" class="comment-form">
+                <h4>Add Comment</h4>
+                <div class="form-group">
+                    <label>Comment as <strong>{{ current_user.full_name }}</strong></label>
+                    <textarea name="content" rows="3" required placeholder="Write your comment..."></textarea>
+                </div>
+                {% if current_user.role in ['admin', 'agent', 'team_leader'] %}
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="is_internal">
+                        <span class="checkmark"></span>
+                        Internal note (only visible to agents)
+                    </label>
+                </div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Post Comment
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right: Sidebar -->
+    <div class="ticket-sidebar">
+        <!-- Update Ticket -->
+        {% if current_user.role in ['admin', 'agent', 'team_leader'] %}
+        <div class="card">
+            <h3><i class="fas fa-edit"></i> Update Ticket</h3>
+            <form method="POST" action="{{ url_for('update_ticket', ticket_id=ticket.id) }}">
+                <div class="form-group">
+                    <label>Status</label>
+                    <select name="status">
+                        <option value="Open" {% if ticket.status == 'Open' %}selected{% endif %}>Open</option>
+                        <option value="In Progress" {% if ticket.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                        <option value="Resolved" {% if ticket.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                        <option value="Closed" {% if ticket.status == 'Closed' %}selected{% endif %}>Closed</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Priority</label>
+                    <select name="priority">
+                        <option value="Critical" {% if ticket.priority == 'Critical' %}selected{% endif %}>Critical</option>
+                        <option value="High" {% if ticket.priority == 'High' %}selected{% endif %}>High</option>
+                        <option value="Medium" {% if ticket.priority == 'Medium' %}selected{% endif %}>Medium</option>
+                        <option value="Low" {% if ticket.priority == 'Low' %}selected{% endif %}>Low</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <select name="category">
+                        <option value="Hardware" {% if ticket.category == 'Hardware' %}selected{% endif %}>Hardware</option>
+                        <option value="Software" {% if ticket.category == 'Software' %}selected{% endif %}>Software</option>
+                        <option value="Network" {% if ticket.category == 'Network' %}selected{% endif %}>Network</option>
+                        <option value="Email" {% if ticket.category == 'Email' %}selected{% endif %}>Email</option>
+                        <option value="Active Directory" {% if ticket.category == 'Active Directory' %}selected{% endif %}>Active Directory</option>
+                        <option value="General" {% if ticket.category == 'General' %}selected{% endif %}>General</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Team</label>
+                    <select name="team">
+                        <option value="" {% if not ticket.team %}selected{% endif %}>No Team</option>
+                        <option value="IT" {% if ticket.team == 'IT' %}selected{% endif %}>IT</option>
+                        <option value="Network" {% if ticket.team == 'Network' %}selected{% endif %}>Network</option>
+                        <option value="Support" {% if ticket.team == 'Support' %}selected{% endif %}>Support</option>
+                        <option value="Development" {% if ticket.team == 'Development' %}selected{% endif %}>Development</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Assigned To</label>
+                    <select name="assigned_to">
+                        <option value="Unassigned" {% if ticket.assigned_to == 'Unassigned' %}selected{% endif %}>Unassigned</option>
+                        {% for agent in agents %}
+                        <option value="{{ agent.full_name }}" {% if ticket.assigned_to == agent.full_name %}selected{% endif %}>{{ agent.full_name }} ({{ agent.role|title }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fas fa-save"></i> Update Ticket
+                </button>
+            </form>
+        </div>
+        {% endif %}
+
+        <!-- Requester Info -->
+        <div class="card">
+            <h3><i class="fas fa-user"></i> Requester</h3>
+            <div class="requester-card">
+                <div class="requester-avatar-large">{{ ticket.requester_name[0] }}</div>
+                <div class="requester-info">
+                    <div class="requester-name">{{ ticket.requester_name }}</div>
+                    <div class="requester-email"><i class="fas fa-envelope"></i> {{ ticket.requester_email }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ticket Info -->
+        <div class="card">
+            <h3><i class="fas fa-info-circle"></i> Ticket Info</h3>
+            <div class="info-list">
+                <div class="info-row">
+                    <span class="info-label">Ticket ID</span>
+                    <span class="info-value">#{{ ticket.id }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Created</span>
+                    <span class="info-value">{{ ticket.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Last Updated</span>
+                    <span class="info-value">{{ ticket.updated_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Assigned</span>
+                    <span class="info-value">{{ ticket.assigned_to }}</span>
+                </div>
+                {% if ticket.team %}
+                <div class="info-row">
+                    <span class="info-label">Team</span>
+                    <span class="info-value">{{ ticket.team }}</span>
+                </div>
+                {% endif %}
+                {% if ticket.closed_by %}
+                <div class="info-row">
+                    <span class="info-label">Closed By</span>
+                    <span class="info-value">{{ ticket.closed_by }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Closed At</span>
+                    <span class="info-value">{{ ticket.closed_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Delete -->
+        {% if current_user.role == 'admin' %}
+        <form method="POST" action="{{ url_for('delete_ticket', ticket_id=ticket.id) }}" onsubmit="return confirm('Are you sure you want to delete this ticket? This action cannot be undone.');">
+            <button type="submit" class="btn btn-danger btn-block">
+                <i class="fas fa-trash"></i> Delete Ticket
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.team-badge {
+    background: rgba(139, 92, 246, 0.15);
+    color: #8b5cf6;
+    padding: 0.25rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+</style>
+{% endblock %}
